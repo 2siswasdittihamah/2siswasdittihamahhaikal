@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game IPAS Kelas 4 — Kuis Interaktif</title>
+  <style>
+    :root{--glass: rgba(255,255,255,0.85); --accent:#047857}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    /* Background video fills screen */
+    .bg-video{position:fixed;inset:0;object-fit:cover;width:100%;height:100%;z-index:-2}
+    .overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.25), rgba(2,6,23,0.45));z-index:-1}
+    header{display:flex;align-items:center;gap:16px;padding:18px 24px}
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo svg{width:72px;height:72px}
+    .title{color:white;font-size:20px;font-weight:700}
+
+    main{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:920px;max-width:96%;background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.90));border-radius:14px;box-shadow:0 10px 40px rgba(2,6,23,0.25);overflow:hidden}
+    .card .top{padding:18px 22px;display:flex;justify-content:space-between;align-items:center}
+    .meta{display:flex;gap:12px;align-items:center}
+    .score{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;font-weight:700}
+    .controls button{margin-left:8px;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .controls .start{background:#0ea5a4;color:white}
+    section.quiz{padding:22px;display:grid;grid-template-columns:1fr 340px;gap:20px}
+    .question-box{background:transparent}
+    .question{font-size:20px;margin-bottom:12px}
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choice{padding:12px;border-radius:10px;border:1px solid rgba(2,6,23,0.08);cursor:pointer;background:white}
+    .choice.correct{border-color:green;background:#ecfdf5}
+    .choice.wrong{border-color:#ef4444;background:#fff1f2}
+    aside.sidebar{background:var(--glass);padding:16px;border-left:1px solid rgba(2,6,23,0.04)}
+    .progress{height:12px;background:rgba(2,6,23,0.06);border-radius:8px;overflow:hidden}
+    .progress > i{display:block;height:12px;background:linear-gradient(90deg,#34d399,#06b6d4);width:0%}
+    .q-list{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .q-pill{padding:6px 8px;border-radius:8px;border:1px solid rgba(2,6,23,0.06);font-size:13px}
+    .footer{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;border-top:1px solid rgba(2,6,23,0.04)}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
+    @media (max-width:880px){section.quiz{grid-template-columns:1fr}aside.sidebar{order:2}}
+  </style>
+</head>
+<body>
+  <!-- Background video: GANTI sumber video di bawah jika ingin pakai file lokal atau URL lain -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="HUTAN.mp4" type="video/mp4">
+    <!-- fallback: jika video tidak mau, background akan tetap berwarna -->
+  </video>
+  <div class="overlay"></div>
+
+  <header>
+    <div class="logo">
+<!-- Logo SVG sederhana -->
+<img src="logo.png" alt="Logo Game IPAS" style="width:80px;height:auto;border-radius:12px;object-fit:cover">
+<div>
+<div class="title">Game IPAS — Kelas 4</div>
+<div style="color:rgba(255,255,255,0.8);font-size:12px">Kuis Interaktif: Sains & Lingkungan</div>
+</div>
+      <div>
+        <div class="title">MARI BERMAIN GAME BERSAMA HAIKAL PELAJARAN IPAS Kelas 4IPAS — Kelas 4</div>
+        <div style="color:rgba(255,255,255,0.8);font-size:12px">Kuis Interaktif: Sains & Lingkungan</div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="score" id="scoreDisplay">Skor: 0</div>
+      <div class="controls">
+        <button class="start" id="startBtn">Mulai</button>
+        <button id="soundToggle">Putar Musik</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="top">
+        <div style="font-weight:700">Soal IPAS Kelas 4 — Pilih jawaban yang benar</div>
+        <div style="color:rgba(2,6,23,0.6)" id="status">Siap</div>
+      </div>
+
+      <section class="quiz">
+        <div class="question-box">
+          <div class="question" id="questionText">Klik 'Mulai' untuk memulai kuis.</div>
+          <div class="choices" id="choices"></div>
+        </div>
+
+        <aside class="sidebar">
+          <div><strong>Progres</strong></div>
+          <div class="progress" style="margin-top:8px"><i id="progressBar"></i></div>
+          <div class="q-list" id="qList"></div>
+
+          <div style="margin-top:16px"><strong>Aturan</strong>
+            <ul style="padding-left:18px;margin:8px 0">
+              <li>10 soal per permainan</li>
+              <li>+10 poin tiap jawaban benar</li>
+              <li>Tidak ada pengurangan untuk salah</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+
+      <div class="footer">
+        <div id="feedback">--</div>
+        <div>
+          <button class="btn" id="nextBtn" disabled>Soal Berikutnya</button>
+          <button class="btn" id="restartBtn" style="background:#ef4444;margin-left:10px">Main Lagi</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Musik latar (GANTI src jika ingin pakai file lokal). Karena browser mungkin memblok autoplay audio, tombol Putar Musik digunakan -->
+  <audio id="bgMusic" loop>
+    <source src="ADNANI.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // Daftar soal (boleh diedit/tambah sesuai kebutuhan kurikulum kelas 4)
+    const QUESTIONS = [
+      {q: 'Manakah dari berikut ini yang merupakan sumber energi dari matahari?', choices:['Angin','Batu bara','Cahaya matahari','Air'], a:2},
+      {q: 'Proses tumbuhan membuat makanan disebut...', choices:['Respirasi','Fotosintesis','Penguapan','Hujan'], a:1},
+      {q: 'Bagian tumbuhan yang menyerap air dari tanah adalah...', choices:['Daun','Akar','Batang','Bunga'], a:1},
+      {q: 'Binatang herbivora makan...', choices:['Daging','Tumbuhan','Kedua-duanya','Tidak makan'], a:1},
+      {q: 'Satuan pengukuran panjang yang umum digunakan adalah...', choices:['Gram','Meter','Liter','Derajat'], a:1},
+      {q: 'Apa yang terjadi jika tanaman kekurangan air?', choices:['Tumbuh lebih cepat','Layu','Berbunga lebih banyak','Warna hijau meningkat'], a:1},
+      {q: 'Manakah yang termasuk hewan pemangsa (karnivora)?', choices:['Sapi','Kucing besar seperti singa','Kelinci','Ayam'], a:1},
+      {q: 'Di bawah ini termasuk benda tidak bergerak adalah...', choices:['Bola yang dilempar','Meja','Kucing yang berlari','Burung terbang'], a:1},
+      {q: 'Perubahan wujud dari cair menjadi gas disebut...', choices:['Mencair','Menguap','Mengering','Membeku'], a:1},
+      {q: 'Apa yang dapat dilakukan untuk menghemat air?', choices:['Membuang sampah ke sungai','Mandi lama-lama','Memperbaiki keran yang bocor','Menyiram tanaman tiap jam'], a:2}
+    ];
+
+    // state
+    let score = 0;
+    let currentIndex = 0;
+    let order = [];
+    const total = 10;
+
+    // elements
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const choicesEl = document.getElementById('choices');
+    const questionText = document.getElementById('questionText');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const status = document.getElementById('status');
+    const feedback = document.getElementById('feedback');
+    const progressBar = document.getElementById('progressBar');
+    const qList = document.getElementById('qList');
+    const bgMusic = document.getElementById('bgMusic');
+    const soundToggle = document.getElementById('soundToggle');
+
+    // helpers
+    function shuffle(arr){return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(x=>x.v)}
+
+    function initGame(){
+      score = 0; currentIndex = 0; scoreDisplay.innerText = 'Skor: 0';
+      // random order of questions (allow repeat if pool smaller)
+      order = shuffle([...Array(QUESTIONS.length).keys()]).slice(0, total);
+      renderQuestionList();
+      status.innerText = 'Berjalan';
+      showQuestion(0);
+    }
+
+    function renderQuestionList(){
+      qList.innerHTML = '';
+      for(let i=0;i<order.length;i++){
+        const pill = document.createElement('div');pill.className='q-pill';pill.innerText='Soal '+(i+1);qList.appendChild(pill);
+      }
+      updateProgress();
+    }
+
+    function showQuestion(idx){
+      currentIndex = idx;
+      const qObj = QUESTIONS[ order[idx] ];
+      questionText.innerText = (idx+1) + '. ' + qObj.q;
+      choicesEl.innerHTML = '';
+      qObj.choices.forEach((c, i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'choice';btn.innerText = c;btn.onclick = ()=>selectAnswer(i, btn);
+        choicesEl.appendChild(btn);
+      });
+      nextBtn.disabled = true;
+      feedback.innerText = `Soal ${idx+1} dari ${order.length}`;
+      updateProgress();
+    }
+
+    function selectAnswer(choiceIndex, btnEl){
+      const qObj = QUESTIONS[ order[currentIndex] ];
+      const all = Array.from(document.querySelectorAll('.choice'));
+      // disable further clicks
+      all.forEach(b=>b.onclick=null);
+
+      if(choiceIndex === qObj.a){
+        btnEl.classList.add('correct');
+        score += 10;
+        scoreDisplay.innerText = 'Skor: '+score;
+        feedback.innerText = 'Jawaban benar! +10 poin.';
+      } else {
+        btnEl.classList.add('wrong');
+        // show correct one
+        all[qObj.a].classList.add('correct');
+        feedback.innerText = 'Jawaban salah.';
+      }
+
+      // mark pill
+      qList.children[currentIndex].style.background = choiceIndex === qObj.a ? '#d1fae5' : '#fee2e2';
+
+      nextBtn.disabled = false;
+    }
+
+    nextBtn.addEventListener('click', ()=>{
+      if(currentIndex+1 < order.length) showQuestion(currentIndex+1);
+      else endGame();
+    });
+
+    restartBtn.addEventListener('click', ()=>{
+      initGame();
+    });
+
+    startBtn.addEventListener('click', ()=>{
+      initGame();
+      // try to start music (may be blocked until user interacts) but startBtn is interaction
+      try{ bgMusic.play(); soundToggle.innerText='Hentikan Musik'; }catch(e){}
+    });
+
+    soundToggle.addEventListener('click', ()=>{
+      if(bgMusic.paused){ bgMusic.play(); soundToggle.innerText='Hentikan Musik'; }
+      else{ bgMusic.pause(); soundToggle.innerText='Putar Musik'; }
+    });
+
+    function updateProgress(){
+      const pct = Math.round((currentIndex / (order.length)) * 100);
+      progressBar.style.width = pct + '%';
+    }
+
+    function endGame(){
+      questionText.innerText = 'Permainan selesai! Skor akhir: ' + score;
+      choicesEl.innerHTML = '';
+      status.innerText = 'Selesai';
+      feedback.innerText = 'Terima kasih sudah bermain. Tekan Main Lagi untuk mengulang.';
+      nextBtn.disabled = true;
+    }
+
+    // Inisialisasi tampilan soal placeholder
+    (function(){
+      // show small preview of questions count
+      for(let i=0;i<total;i++){
+        // will be filled on start
+      }
+    })();
+
+    // Catatan untuk guru/pengembang: GANTI sumber video/audio di tag <video> dan <audio> dengan file lokal atau URL bebas royalti yang Anda miliki.
+  </script>
+</body>
+</html>
